@@ -2,19 +2,13 @@ import com.company.TypeScriptAnnotation;
 
 @TypeScriptAnnotation
 public class PersonA {
-    private final String name;
-    private final String lastname;
+    private String name;
+    private char lastname;
     public String temp;
-    private final int num1;
+    private int num1;
     public int num2;
 
-    public PersonA (String name, String lastname, int num1) {
-        this.name = name;
-        this.lastname = lastname;
-        this.num1 = num1;
-    }
-
-    public static void main(String[] args) {
-
-    }
+    public String None(){ return "a";}
+    private float Something(double b){ return (float)b;}
+    public boolean More (long a, long b, long c) {return a>b || b<c;}
 }

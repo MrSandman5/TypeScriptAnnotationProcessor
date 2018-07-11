@@ -4,5 +4,7 @@ interface IPersonA {
     temp : string
     num1 : number
     num2 : number
-    main(args: , ) : void
+    More(a: number, b: number, c: number) : boolean
+    Something(b: number) : float
+    None() : string
 }

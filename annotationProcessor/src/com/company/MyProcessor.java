@@ -43,8 +43,8 @@ public class MyProcessor extends AbstractProcessor {
                         TypeMirror argType = arg.asType();
                         String argName = arg.getSimpleName().toString();
                         argument.put(argName, argType);
-                        funcArguments.put(fieldName, argument);
                     }
+                    funcArguments.put(fieldName, new HashMap<>(argument));
                 }
                 try {
                     PrintWriter pw = new PrintWriter(className + ".ts", "UTF-8");
@@ -80,7 +80,11 @@ public class MyProcessor extends AbstractProcessor {
                                 if (size > 0) pw.print(", ");
                             }
                         }
-                        pw.println(") : " + fun.getValue().getKind().toString().toLowerCase());
+                        if (fun.getValue().toString().equals((String.class.getCanonicalName()))
+                                || fun.getValue().getKind().equals(TypeKind.valueOf("CHAR"))) {
+                            pw.println(") : string");
+                        }
+                        else pw.println(") : " + fun.getValue().getKind().toString().toLowerCase());
                     }
                     pw.println("}");
                     pw.close();
