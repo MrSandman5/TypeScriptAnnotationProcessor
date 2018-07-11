@@ -30,6 +30,7 @@ public class MyProcessor extends AbstractProcessor {
                 ArrayList<String> booleanNames = new ArrayList<>();
                 Map<String, TypeMirror> function = new HashMap<>();
                 Map<String, Map<String, TypeMirror>> funcArguments = new HashMap<>();
+                Map<String, TypeMirror> argument = new HashMap<>();
                 TypeElement clazz = (TypeElement)annotatedElement;
                 String className = clazz.getSimpleName().toString();
                 fillTypeLists(clazz, stringNames, numberNames, booleanNames);
@@ -39,11 +40,10 @@ public class MyProcessor extends AbstractProcessor {
                     String fieldName = field.getSimpleName().toString();
                     function.put(fieldName, fieldType);
                     for (VariableElement arg : field.getParameters()) {
-                        Map<String, TypeMirror> temp = new HashMap<>();
                         TypeMirror argType = arg.asType();
                         String argName = arg.getSimpleName().toString();
-                        temp.put(argName, argType);
-                        funcArguments.put(fieldName, temp);
+                        argument.put(argName, argType);
+                        funcArguments.put(fieldName, argument);
                     }
                 }
                 try {
@@ -62,6 +62,7 @@ public class MyProcessor extends AbstractProcessor {
                         pw.print("    " + fun.getKey() + "(");
                         Map<String, TypeMirror> temp = funcArguments.get(fun.getKey());
                         if (temp != null) {
+                            int size = temp.size();
                             for (Map.Entry<String, TypeMirror> arg : temp.entrySet()) {
                                 pw.print(arg.getKey() + ": ");
                                 if (arg.getValue().toString().equals((String.class.getCanonicalName()))
@@ -75,7 +76,8 @@ public class MyProcessor extends AbstractProcessor {
                                 } else if (arg.getValue().getKind().equals(TypeKind.valueOf("BOOLEAN"))) {
                                     pw.print("boolean");
                                 }
-                                pw.print(", ");
+                                size--;
+                                if (size > 0) pw.print(", ");
                             }
                         }
                         pw.println(") : " + fun.getValue().getKind().toString().toLowerCase());
