@@ -5,6 +5,6 @@ interface IPersonA {
     num1 : number
     num2 : number
     More(a: number, b: number, c: number) : boolean
-    Something(b: number) : float
+    Something(b: number) : number
     None() : string
 }
