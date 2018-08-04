@@ -1,5 +1,7 @@
 package com.company;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import javafx.util.Pair;
 
 import javax.annotation.processing.*;
@@ -30,10 +32,8 @@ public class MyProcessor extends AbstractProcessor {
                 TypeElement clazz = (TypeElement)annotatedElement;
                 String className = clazz.getSimpleName().toString();
 
-                ArrayList<String> stringNames = new ArrayList<>();
-                ArrayList<String> numberNames = new ArrayList<>();
-                ArrayList<String> booleanNames = new ArrayList<>();
-                fillTypeLists(clazz, stringNames, numberNames, booleanNames);
+                Multimap<String, String> primitiveNames = ArrayListMultimap.create();
+                findPrimitiveTypes(clazz, primitiveNames);
 
                 Map<String, TypeMirror> methodReturnTypes = new HashMap<>();
                 Map<String, List<Pair<String, TypeMirror>>> funcArguments = new HashMap<>();
@@ -53,14 +53,8 @@ public class MyProcessor extends AbstractProcessor {
                 try {
                     PrintWriter pw = new PrintWriter(className + ".ts", "UTF-8");
                     pw.println("interface I" + className + " {");
-                    for (String stringName : stringNames) {
-                        pw.println("    " + stringName + " : string");
-                    }
-                    for (String numberName : numberNames) {
-                        pw.println("    " + numberName + " : number");
-                    }
-                    for (String booleanName : booleanNames) {
-                        pw.println("    " + booleanName + " : boolean");
+                    for (Map.Entry<String, String> name : primitiveNames.entries()) {
+                        pw.println("    " + name.getValue() + " : " + name.getKey());
                     }
                     for (Map.Entry<String, TypeMirror> fun : methodReturnTypes.entrySet()){
                         String funcName = fun.getKey();
@@ -70,37 +64,14 @@ public class MyProcessor extends AbstractProcessor {
                             int size = argList.size();
                             for (Pair<String, TypeMirror> arg : argList) {
                                 pw.print(arg.getKey() + ": ");
-                                if (arg.getValue().toString().equals((String.class.getCanonicalName()))
-                                        || arg.getValue().getKind().equals(TypeKind.valueOf("CHAR"))) {
-                                    pw.print("string");
-                                } else if (arg.getValue().getKind().equals(TypeKind.valueOf("INT"))
-                                        || arg.getValue().getKind().equals(TypeKind.valueOf("LONG"))
-                                        || arg.getValue().getKind().equals(TypeKind.valueOf("FLOAT"))
-                                        || arg.getValue().getKind().equals(TypeKind.valueOf("DOUBLE"))) {
-                                    pw.print("number");
-                                } else if (arg.getValue().getKind().equals(TypeKind.valueOf("BOOLEAN"))) {
-                                    pw.print("boolean");
-                                }
+                                String convertedArg = convertJavaToTypeScriptType(arg.getValue());
+                                pw.print(convertedArg);
                                 size--;
                                 if (size > 0) pw.print(", ");
                             }
                         }
-                        if (fun.getValue().toString().equals((String.class.getCanonicalName()))
-                                || fun.getValue().getKind().equals(TypeKind.valueOf("CHAR"))) {
-                            pw.println(") : string");
-                        }
-                        else if (fun.getValue().getKind().equals(TypeKind.valueOf("INT"))
-                                || fun.getValue().getKind().equals(TypeKind.valueOf("LONG"))
-                                || fun.getValue().getKind().equals(TypeKind.valueOf("FLOAT"))
-                                || fun.getValue().getKind().equals(TypeKind.valueOf("DOUBLE"))) {
-                            pw.println(") : number");
-                        }
-                        else if (fun.getValue().getKind().equals(TypeKind.valueOf("BOOLEAN"))) {
-                            pw.println(") : boolean");
-                        }
-                        else if (fun.getValue().getKind().equals(TypeKind.valueOf("VOID"))) {
-                            pw.println(") : void");
-                        }
+                        String convertedFun = convertJavaToTypeScriptType(fun.getValue());
+                        pw.println(") : " + convertedFun);
                     }
                     pw.println("}");
                     pw.close();
@@ -112,27 +83,47 @@ public class MyProcessor extends AbstractProcessor {
         return true;
     }
 
-    private void fillTypeLists(TypeElement clazz,
-                               ArrayList<String> stringNames,
-                               ArrayList<String> numberNames,
-                               ArrayList<String> booleanNames){
+    private String convertJavaToTypeScriptType(TypeMirror clazz) {
+        String variableType = clazz.getKind().toString();
+        System.out.println(variableType);
+        switch (variableType){
+            case "CHAR":
+                return "string";
+            case "BYTE":
+                return "number";
+            case "SHORT":
+                return "number";
+            case "INT":
+                return "number";
+            case "LONG":
+                return "number";
+            case "FLOAT":
+                return "number";
+            case "DOUBLE":
+                return "number";
+            case "BOOLEAN":
+                return "boolean";
+            case "VOID":
+                return "void";
+        }
+        if (clazz.toString().equals((String.class.getCanonicalName()))) return "string";
+        return "";
+    }
+
+    private void findPrimitiveTypes(TypeElement clazz, Multimap<String, String> primitiveTypes){
         for (VariableElement field
                 : ElementFilter.fieldsIn(clazz.getEnclosedElements())) {
+            System.out.println(String.class.getSimpleName());
             TypeMirror fieldClass = field.asType();
             String fieldName = field.getSimpleName().toString();
-            if (fieldClass.toString().equals((String.class.getCanonicalName()))
-                    || fieldClass.getKind().equals(TypeKind.valueOf("CHAR"))) {
-                stringNames.add(fieldName);
-            } else if (fieldClass.getKind().equals(TypeKind.valueOf("INT"))
-                    || fieldClass.getKind().equals(TypeKind.valueOf("LONG"))
-                    || fieldClass.getKind().equals(TypeKind.valueOf("FLOAT"))
-                    || fieldClass.getKind().equals(TypeKind.valueOf("DOUBLE"))) {
-                numberNames.add(fieldName);
-            } else if (fieldClass.getKind().equals(TypeKind.valueOf("BOOLEAN"))) {
-                booleanNames.add(fieldName);
-            }
+            String convertedType = convertJavaToTypeScriptType(fieldClass);
+            primitiveTypes.put(convertedType, fieldName);
         }
     }
+
+    /*private void printInterface(String classname){
+
+    }*/
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {

@@ -1,6 +1,11 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     compile files('../annotationProcessor/out/artifacts/annotationProcessor_jar/annotationProcessor.jar')
+    compile 'com.google.guava:guava:26.0-jre'
 }
